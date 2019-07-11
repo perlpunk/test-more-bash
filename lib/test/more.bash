@@ -93,3 +93,45 @@ unlike() {
 Test::More:unlike-fail() {
     Test::Tap:diag "Got: '$got'"
 }
+
+cmp-array() {
+    if [[ $# -lt 2 ]]; then
+        echo 'usage: cmp-array "message" ${array[@]}'
+        exit 1
+    fi
+    local label="$1"
+    shift
+    local array=($@)
+    local result=true
+    local message=
+
+    if [[ ${#array[@]} -lt ${#expected[@]} ]]; then
+        Test::Tap:fail "$label"
+        Test::Tap:diag "Array has less elements (${#array[@]}) than expected (${#expected[@]})"
+        Test::Tap:note ${array[@]}
+        return
+    fi
+
+    for i in ${!expected[@]}; do
+        if [[ "${array[$i]}" == "${expected[$i]}" ]]; then
+            true
+        else
+            message="array[$i]: >>${array[$i]}<< does not match >>${expected[$i]}<<"
+            result=false
+        fi
+    done
+
+    if [[ ${#array[@]} -gt ${#expected[@]} ]]; then
+        Test::Tap:fail "$label"
+        Test::Tap:diag "Array has more elements (${#array[@]}) than expected (${#expected[@]})"
+        Test::Tap:note ${array[@]}
+        return
+    fi
+
+    if $result; then
+        Test::Tap:pass "$label"
+    else
+        Test::Tap:fail "$label"
+    fi
+    [[ -n "$message" ]] && Test::Tap:diag $message
+}
